@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/alertlayout"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+
+    <Button
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="Easy"
+        android:id="@+id/easy_button"
+        android:layout_gravity="center_vertical" />
+
+    <Button
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="Medium"
+        android:layout_below="@+id/easy_button"
+        android:id="@+id/medium_button"
+        android:layout_gravity="center_vertical" />
+
+    <Button
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="Hard"
+        android:id="@+id/difficult_button"
+        android:layout_below="@+id/medium_button"
+        android:layout_gravity="center_vertical" />
+</RelativeLayout>

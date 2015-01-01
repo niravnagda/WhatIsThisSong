@@ -1,0 +1,67 @@
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:id="@+id/root_layout"
+    android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:icon="@drawable/ic_launcher"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin" tools:context=".MainActivity">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" Enter participant names: "
+            android:id="@+id/textView"
+            android:layout_marginTop="15dp"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" />
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:id="@+id/edittext"
+            android:layout_marginTop="10dp"
+            android:layout_below="@+id/textView"
+            android:orientation="vertical"/>
+
+        <ImageButton
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:id="@+id/addicon"
+            android:theme="@style/Base.ThemeOverlay.AppCompat.ActionBar"
+            android:src="@drawable/addicon"
+            android:scaleType="centerCrop"
+            android:layout_marginLeft="10dp"
+            android:layout_alignBottom="@+id/edittext"
+            android:layout_alignRight="@+id/edittext"/>
+
+        <ImageButton
+            android:layout_width="@dimen/abc_action_button_min_width_material"
+            android:layout_height="@dimen/abc_action_button_min_height_material"
+            android:text="Reset"
+            android:id="@+id/Reset"
+            android:src="@drawable/reset"
+            android:scaleType= "centerCrop"
+            android:layout_alignTop="@+id/Go"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/addicon"
+            android:layout_alignParentStart="true" />
+
+        <ImageButton
+            android:layout_width="@dimen/abc_action_button_min_width_material"
+            android:layout_height="@dimen/abc_action_button_min_height_material"
+            android:text="Go"
+            android:scaleType="centerCrop"
+            android:src="@drawable/go"
+            android:id="@+id/Go"
+            android:layout_margin="30dp"
+            android:layout_below="@+id/addicon"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"/>
+    </RelativeLayout>
+</ScrollView>

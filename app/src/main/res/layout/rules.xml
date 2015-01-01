@@ -1,0 +1,50 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:id="@+id/rules"
+    android:layout_height="fill_parent">
+    <ScrollView android:id="@+id/aboutscrollview"
+        android:orientation="vertical"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent">
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+            <TextView android:text="Thanks for installing What is this song..."
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:paddingLeft="15px"
+                android:layout_gravity="center_vertical" />
+            <TextView android:text="Rules:
+   \n1. Each participant will get 30 seconds to identify a song
+   \n2. Each song would also play for 30 seconds
+   \n3.For each right answer participant will get one point
+   \n4. No negative points for a wrong answer"
+                android:layout_width="fill_parent"
+                android:id="@+id/rulesString"
+                android:layout_height="wrap_content"
+                android:paddingTop="15px"
+                android:paddingLeft="15px"
+                android:textStyle="bold"/>
+            <TextView android:text="Happy Playing!!! "
+                android:layout_width="fill_parent"
+                android:id="@+id/happyplaying"
+                android:layout_height="wrap_content"
+                android:paddingTop="15px"
+                android:paddingLeft="280px"
+                android:textAlignment="center"
+                android:capitalize="characters"
+                android:backgroundTint="@color/abc_background_cache_hint_selector_material_dark"
+                android:textStyle="bold"/>
+            <TextView android:text="View these rules again from menu on top right corner"
+                android:layout_width="fill_parent"
+                android:id="@+id/viewagain"
+                android:layout_height="wrap_content"
+                android:textAlignment="center"
+                android:paddingLeft="10px"
+                android:capitalize="characters"
+                android:backgroundTint="@color/abc_background_cache_hint_selector_material_dark"/>
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WhatIsThisSong</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_identify">IdentifyActivity</string>
+    <string name="publisherID">pub-8814873675596165</string>
+    <string name="adUnitId">ca-app-pub-8814873675596165/6146278331</string>
+    <string name="getting_heavy_rotation">Loading Rdio heavy rotation&#8230;</string>
+    <string name="getting_user">Looking up current user&#8230;</string>
+</resources>
