@@ -37,8 +37,8 @@
             android:src="@drawable/addicon"
             android:scaleType="centerCrop"
             android:layout_marginLeft="10dp"
-            android:layout_alignBottom="@+id/edittext"
-            android:layout_alignRight="@+id/edittext"/>
+            android:layout_alignRight="@+id/edittext"
+            android:layout_alignBottom="@+id/edittext" />
 
         <ImageButton
             android:layout_width="@dimen/abc_action_button_min_width_material"

@@ -1,16 +1,12 @@
 package com.knowthissong;
 
 import android.annotation.TargetApi;
-import android.app.ActionBar;
 import android.app.AlertDialog;
-import android.app.Application;
 import android.app.DialogFragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
@@ -27,7 +23,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -39,7 +34,6 @@ import android.widget.Toast;
 import com.rdio.android.api.Rdio;
 import com.rdio.android.api.RdioApiCallback;
 import com.rdio.android.api.RdioListener;
-import com.rdio.android.api.services.RdioAuthorisationException;
 import com.rdio.android.api.OAuth1WebViewActivity;
 
 import com.google.android.gms.ads.AdRequest;
@@ -64,6 +58,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class IdentifyActivity extends ActionBarActivity implements RdioListener {
 
@@ -101,6 +97,7 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
     private static int currentInd = 0;
     private static int currentSong = 0;
     private String[] names;
+    Timer T = new Timer();
     int count = 30;
 
     private HashMap<String, Integer> scores;
@@ -149,7 +146,7 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
         }
         names = intent.getStringArrayExtra("names");
         TextView name = (TextView) findViewById(R.id.name);
-        name.setText("Name: " + names[0] + " - 0");
+        name.setText("Name: " + names[0]);
 
         TextView difficulty = (TextView) findViewById(R.id.level);
         difficulty.setText(level);
@@ -238,6 +235,33 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
                 updateScore(1);
             }
         });
+
+        TextView viewScores = (TextView) findViewById(R.id.viewScore);
+        viewScores.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showScores();
+            }
+        });
+        AlertDialog.Builder readyBuilder = new AlertDialog.Builder(this);
+        readyBuilder.setIcon(R.drawable.ic_launcher);
+        readyBuilder.setTitle("Are you ready???");
+        readyBuilder.setPositiveButton("Ready", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                next(true);
+            }
+        });
+        readyBuilder.setNegativeButton("Back home", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                finish();
+                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                startActivity(intent);
+            }
+        });
+        final AlertDialog ready = readyBuilder.create();
+        ready.show();
     }
 
     public void displayRules() {
@@ -252,20 +276,23 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
                     public void onClick(DialogInterface dialog, int whichButton) {
                         if(player != null)
                             player.stop();
+                        resetTimer();
                         next(true);
                     }
                 }).show();
     }
 
     public void updateScore(int score) {
-        if(player != null)
+        if(player != null) {
             player.stop();
+            player = null;
+        }
         TextView name = (TextView) findViewById(R.id.name);
         String playerName = names[currentSong % scores.size()];
         scores.put(playerName, scores.get(playerName) + score);
         currentSong++;
         playerName = names[currentSong % scores.size()];
-        name.setText("Name: " + (names[currentSong % scores.size()]) + " - " + scores.get(playerName));
+        name.setText("Name: " + playerName);
         next(true);
         resetTimer();
         if(currentSong != 0 && currentSong % 20 == 0) {
@@ -275,6 +302,7 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
 
     public void resetTimer() {
         count = 30;
+        T.cancel();
         setTimer(30);
     }
 
@@ -294,6 +322,7 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
         LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View layout = inflater.inflate(R.layout.scoreslayout, (ViewGroup) findViewById(R.id.scoresview));
         scoresDialog = new AlertDialog.Builder(IdentifyActivity.this);
+        scoresDialog.setIcon(R.drawable.ic_launcher);
         scoresDialog.setTitle("Scores");
         Iterator it = scores.entrySet().iterator();
         while(it.hasNext()) {
@@ -308,7 +337,7 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
 
             ));
             playerName.setGravity(Gravity.LEFT);
-            playerName.setPadding(30,0,15,0);
+            playerName.setPadding(60,0,15,0);
             int score = (int) pairs.getValue();
             TextView scores = new TextView(this);
             scores.setText("" + score);
@@ -319,7 +348,7 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
 
             ));
             scores.setGravity(Gravity.RIGHT);
-            scores.setPadding(15,0,30,0);
+            scores.setPadding(15,0,50,0);
             TableLayout scoreLayout = new TableLayout(getApplicationContext());
 
             TableRow scoreRow = new TableRow(getApplicationContext());
@@ -336,32 +365,37 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 alert.dismiss();
+
                 if(finish) {
-                    if(player != null)
+                    T.cancel();
+                    if(player != null) {
                         player.stop();
+                        player = null;
+                    }
                     finish();
                     Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                     startActivity(intent);
+                } else {
+                    resetTimer();
+                    next(true);
                 }
             }
         });
         scoresDialog.setView(layout);
         alert = scoresDialog.create();
         alert.show();
-
     }
 
     private void playPause() {
         if (player != null) {
             if (player.isPlaying()) {
-                player.pause();
-                updatePlayPause(false);
+                //player.pause();
+                //updatePlayPause(false);
+                Toast.makeText(getApplicationContext(), "You cannot pause the song!!!", Toast.LENGTH_SHORT).show();
             } else {
                 player.start();
                 updatePlayPause(true);
             }
-        } else {
-            next(true);
         }
     }
 
@@ -517,6 +551,10 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
                 if(track == null) {
                     return null;
                 }
+                if(player != null) {
+                    player.stop();
+                    player = null;
+                }
                 else {
                     try {
                         player = rdio.getPlayerForTrack(track.key, null, manualPlay);
@@ -530,7 +568,6 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
                             @Override
                             public void onCompletion(MediaPlayer mp) {
                                 updateScore(0);
-                                next(false);
                             }
                         });
                     } catch(Exception e) {
@@ -539,30 +576,20 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
                     }
                     try {
                         if(player != null) {
-
                             player.start();
-                            Thread t = new Thread() {
+                            T = new Timer();
+                            T.scheduleAtFixedRate(new TimerTask() {
                                 @Override
                                 public void run() {
-                                    try {
-                                        while (!isInterrupted() && count > 0) {
-                                            Thread.sleep(1000);
-                                            runOnUiThread(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    setTimer(count--);
-                                                }
-                                            });
+                                    runOnUiThread(new Runnable()
+                                    {
+                                        public void run() {
+                                            if(count >= 0)
+                                                setTimer(count--);
                                         }
-                                    } catch (InterruptedException e) {
-                                        e.printStackTrace();
-                                    }
+                                    });
                                 }
-                            };
-                            t.start();
-                            if(count == 0) {
-                                t.destroy();
-                            }
+                            }, 1000, 1000);
                         }
 
                     } catch (Exception e) {
@@ -627,7 +654,7 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
 
     private void updatePlayPause(boolean playing) {
         if (playing) {
-            playPause.setImageResource(R.drawable.pause);
+            return;
         } else {
             playPause.setImageResource(R.drawable.play);
         }

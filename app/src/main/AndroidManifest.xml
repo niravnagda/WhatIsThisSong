@@ -22,7 +22,7 @@
             android:name=".MainActivity"
             android:screenOrientation="portrait"
             android:icon="@drawable/ic_launcher"
-            android:label="@string/app_name" >
+            android:label="What is this song" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -33,7 +33,7 @@
             android:name=".IdentifyActivity"
             android:screenOrientation="portrait"
             android:icon="@drawable/ic_launcher"
-            android:label="@string/app_name" >
+            android:label="Game play" >
         </activity>
         <activity
             android:name="com.google.android.gms.ads.AdActivity"
