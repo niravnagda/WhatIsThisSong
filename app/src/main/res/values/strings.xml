@@ -5,6 +5,6 @@
     <string name="title_activity_identify">IdentifyActivity</string>
     <string name="publisherID">pub-8814873675596165</string>
     <string name="adUnitId">ca-app-pub-8814873675596165/6146278331</string>
-    <string name="getting_heavy_rotation">Loading Rdio heavy rotation&#8230;</string>
+    <string name="getting_heavy_rotation">Loading something awesome!!&#8230;</string>
     <string name="getting_user">Looking up current user&#8230;</string>
 </resources>

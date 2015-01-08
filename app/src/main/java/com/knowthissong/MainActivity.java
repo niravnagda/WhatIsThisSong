@@ -15,6 +15,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -30,12 +31,11 @@ public class MainActivity extends ActionBarActivity {
     protected Boolean goAhead = false;
     private AlertDialog.Builder alertDialog2;
     private static int count = 0;
+    EditText name[] = new EditText[10];
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        requestWindowFeature(Window.FEATURE_LEFT_ICON);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        getWindow().setFeatureDrawableResource(Window.FEATURE_LEFT_ICON, R.drawable.ic_launcher);
 
         final ImageButton reset = (ImageButton) findViewById(R.id.Reset);
         reset.setOnClickListener(new View.OnClickListener() {
@@ -46,26 +46,15 @@ public class MainActivity extends ActionBarActivity {
         });
 
         final ImageButton add = (ImageButton) findViewById(R.id.addicon);
+
         add.setOnClickListener(new View.OnClickListener() {
             @TargetApi(Build.VERSION_CODES.HONEYCOMB)
             @Override
             public void onClick(View v) {
-                if(count < 10) {
-                    EditText name = new EditText(MainActivity.this);
-                    LinearLayout ll = (LinearLayout) findViewById(R.id.edittext);
-                    LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                            LinearLayout.LayoutParams.FILL_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-                    layoutParams.topMargin = 20;
-                    ll.addView(name, layoutParams);
-                    name.requestFocus();
-                    count++;
-                }
-                else {
-                    Toast toast = Toast.makeText(getApplicationContext(),"Cannot add anymore participants", Toast.LENGTH_LONG);
-                    toast.show();
-                }
+                addEditText();
             }
         });
+        resetValues();
         final ImageButton go = (ImageButton) findViewById(R.id.Go);
         go.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -87,6 +76,7 @@ public class MainActivity extends ActionBarActivity {
                     Toast toast = Toast.makeText(getApplicationContext(), "No player name added",Toast.LENGTH_LONG);
                     toast.show();
                     goAhead = false;
+                    name[0] = null;
                 }
 
                 if(goAhead) {
@@ -136,7 +126,7 @@ public class MainActivity extends ActionBarActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
+        //getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
 
@@ -173,6 +163,32 @@ public class MainActivity extends ActionBarActivity {
         startActivity(intent);
     }
 
+    public void addEditText() {
+        if(count < 10) {
+            if(count > 0 && name[count - 1] != null && name[count-1].getText().toString().equals("")) {
+                Toast.makeText(getApplicationContext(), "Please enter participant name", Toast.LENGTH_LONG).show();
+                return;
+            }
+            else {
+                name[count] = new EditText(MainActivity.this);
+                name[count].setHint("Enter name");
+                LinearLayout ll = (LinearLayout) findViewById(R.id.edittext);
+                LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.FILL_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                layoutParams.topMargin = 20;
+                ll.addView(name[count], layoutParams);
+                name[count].requestFocus();
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.showSoftInputFromInputMethod(name[count].getWindowToken(), 0);
+                count++;
+            }
+        }
+        else {
+            Toast toast = Toast.makeText(getApplicationContext(),"Cannot add anymore participants", Toast.LENGTH_LONG);
+            toast.show();
+        }
+    }
+
     @Override
     public void onPause() {
         super.onPause();  // Always call the superclass method first
@@ -189,6 +205,9 @@ public class MainActivity extends ActionBarActivity {
         if ((keyCode == KeyEvent.KEYCODE_BACK))
         {
             System.exit(0);
+        }
+        if((keyCode == KeyEvent.KEYCODE_ENTER)) {
+            addEditText();
         }
         return super.onKeyDown(keyCode, event);
     }

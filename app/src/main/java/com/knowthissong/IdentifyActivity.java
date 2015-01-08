@@ -9,6 +9,9 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -97,6 +100,7 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
     private static int currentInd = 0;
     private static int currentSong = 0;
     private String[] names;
+    String level = "Easy";
     Timer T = new Timer();
     int count = 30;
 
@@ -105,30 +109,21 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
     @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        requestWindowFeature(Window.FEATURE_LEFT_ICON);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_identify);
-        getWindow().setFeatureDrawableResource(Window.FEATURE_LEFT_ICON, R.drawable.ic_launcher);
+        //Display the rules
+        displayRules();
 
-        boolean firstrun = getSharedPreferences("PREFERENCE", MODE_PRIVATE).getBoolean("firstrun", true);
-        if(firstrun) {
-            displayRules();
-
-            getSharedPreferences("PREFERENCE", MODE_PRIVATE)
-                    .edit()
-                    .putBoolean("firstrun", false)
-                    .commit();
-        }
+        //Set the difficulty level and names of all the participants
         Intent intent = getIntent();
         int difficultLevel = intent.getIntExtra("difficultyLevel", 2);
-        String level;
         Random rn = new Random();
         if(difficultLevel == 2) {
             level = "Hard";
             int temp = (rn.nextInt() % hardStrings.length);
             if(temp < 0)
                 temp = 0;
-                queryString = hardStrings[0];
+            queryString = hardStrings[0];
         }
         else if(difficultLevel == 1) {
             level = "Medium";
@@ -153,6 +148,7 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
 
         Log.d(TAG + "difficulty level", level);
 
+        // Set the timer to 30
         time = (TextView) findViewById(R.id.timer);
 
         if(player != null)
@@ -243,25 +239,6 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
                 showScores();
             }
         });
-        AlertDialog.Builder readyBuilder = new AlertDialog.Builder(this);
-        readyBuilder.setIcon(R.drawable.ic_launcher);
-        readyBuilder.setTitle("Are you ready???");
-        readyBuilder.setPositiveButton("Ready", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                next(true);
-            }
-        });
-        readyBuilder.setNegativeButton("Back home", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                finish();
-                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-                startActivity(intent);
-            }
-        });
-        final AlertDialog ready = readyBuilder.create();
-        ready.show();
     }
 
     public void displayRules() {
@@ -269,7 +246,7 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
         LayoutInflater li = LayoutInflater.from(this);
         View view = li.inflate(R.layout.rules, (ViewGroup) findViewById(R.id.rules));
         new AlertDialog.Builder(this)
-                .setTitle("rules")
+                .setTitle("Rules")
                 .setIcon(android.R.drawable.ic_menu_info_details)
                 .setView(view)
                 .setNegativeButton("Close", new DialogInterface.OnClickListener() {
@@ -300,15 +277,29 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
         }
     }
 
+    boolean visible = false;
     public void resetTimer() {
         count = 30;
         T.cancel();
         setTimer(30);
+        ImageButton wrong = (ImageButton) findViewById(R.id.Wrong);
+        wrong.setVisibility(View.INVISIBLE);
+        ImageButton right = (ImageButton) findViewById(R.id.Right);
+        right.setVisibility(View.INVISIBLE);
+        visible = false;
     }
 
     public void setTimer(int text) {
         try {
             time.setText("" + text);
+
+            if(text <= 25 && !visible) {
+                ImageButton wrong = (ImageButton) findViewById(R.id.Wrong);
+                wrong.setVisibility(View.VISIBLE);
+                ImageButton right = (ImageButton) findViewById(R.id.Right);
+                right.setVisibility(View.VISIBLE);
+                visible = true;
+            }
         }
         catch(Exception e) {
             e.printStackTrace();
@@ -352,12 +343,15 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
             TableLayout scoreLayout = new TableLayout(getApplicationContext());
 
             TableRow scoreRow = new TableRow(getApplicationContext());
+            GradientDrawable gd = new GradientDrawable();
+            gd.setStroke(1, Color.BLACK);
 
             scoreRow.addView(playerName);
             scoreRow.addView(scores);
             scoreRow.setLayoutParams(new TableLayout.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.WRAP_CONTENT, 1));
             scoreRow.setPadding(5, 5, 5, 5);
             scoreLayout.addView(scoreRow);
+            scoreLayout.setBackgroundDrawable(gd);
             scoreLayout.setColumnStretchable(5, true);
             ((LinearLayout) layout).addView(scoreLayout);
         }
@@ -471,11 +465,30 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
             public void onApiSuccess(JSONObject result) {
                 try {
                     List<NameValuePair> args = new LinkedList<NameValuePair>();
+                    Random rn = new Random();
+                    if(level.equals("Hard")) {
+                        int temp = (rn.nextInt() % hardStrings.length);
+                        if(temp < 0)
+                            temp = 0;
+                        queryString = hardStrings[0];
+                    }
+                    else if(level.equals("Medium")) {
+                        int temp = (rn.nextInt() % mediumStrings.length);
+                        if(temp < 0)
+                            temp = 0;
+                        queryString = mediumStrings[temp];
+                    }
+                    else {
+                        int temp = (rn.nextInt() % easyStrings.length);
+                        if(temp < 0)
+                            temp = 0;
+                        queryString = easyStrings[temp];
+                    }
                     args.add(new BasicNameValuePair("query", queryString));
                     args.add(new BasicNameValuePair("types", "Track"));
-                    args.add(new BasicNameValuePair("count", "100"));
+                    args.add(new BasicNameValuePair("count", "5"));
                     currentInd++;
-                    String temp = "" + (10*currentInd);
+                    String temp = "" + (5*currentInd);
                     Log.i(TAG + " request", args.toString());
                     args.add(new BasicNameValuePair("start",temp));
 

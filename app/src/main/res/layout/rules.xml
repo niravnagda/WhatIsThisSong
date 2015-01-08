@@ -11,16 +11,18 @@
             android:orientation="vertical"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent">
-            <TextView android:text="Thanks for installing What is this song..."
+            <TextView android:text="Thanks for installing WITS!"
+                android:textStyle="bold"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:paddingLeft="15px"
                 android:layout_gravity="center_vertical" />
             <TextView android:text="Rules:
-   \n1. Each participant will get 30 seconds to identify a song
-   \n2. Each song would also play for 30 seconds
-   \n3.For each right answer participant will get one point
-   \n4. No negative points for a wrong answer"
+   \n1. Each participant will get 30 seconds to identify a song.
+   \n2. In between each song there will be a delay of 3 seconds
+   \n3. Each song would also play for 30 seconds.
+   \n4. For each right answer participant will get one point.
+   \n5. No negative points for a wrong answer."
                 android:layout_width="fill_parent"
                 android:id="@+id/rulesString"
                 android:layout_height="wrap_content"
@@ -43,6 +45,7 @@
                 android:layout_height="wrap_content"
                 android:textAlignment="center"
                 android:paddingLeft="10px"
+                android:paddingTop="15px"
                 android:capitalize="characters"
                 android:backgroundTint="@color/abc_background_cache_hint_selector_material_dark"/>
         </LinearLayout>
