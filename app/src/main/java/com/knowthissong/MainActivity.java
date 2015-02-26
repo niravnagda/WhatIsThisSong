@@ -3,24 +3,27 @@ package com.knowthissong;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Build;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.text.InputFilter;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 
@@ -36,17 +39,14 @@ public class MainActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        final ImageButton reset = (ImageButton) findViewById(R.id.Reset);
-        reset.setOnClickListener(new View.OnClickListener() {
+        final TextView addEditText = (TextView) findViewById(R.id.textView);
+        addEditText.setOnClickListener(new View.OnClickListener() {
+            @Override
             public void onClick(View v) {
-                // Reset the values in the EditText fields
-                resetValues();
+                addEditText();
             }
         });
-
         final ImageButton add = (ImageButton) findViewById(R.id.addicon);
-
         add.setOnClickListener(new View.OnClickListener() {
             @TargetApi(Build.VERSION_CODES.HONEYCOMB)
             @Override
@@ -147,12 +147,13 @@ public class MainActivity extends ActionBarActivity {
 
     public void resetValues() {
         ViewGroup group = (ViewGroup)findViewById(R.id.edittext);
-        for (int i = 0, count = group.getChildCount(); i < count; ++i) {
+        for (int i = 0; i < count; ++i) {
             View view = group.getChildAt(i);
             if (view instanceof EditText) {
                 ((EditText)view).setText("");
             }
         }
+        count = 0;
     }
 
     public void startIdentifyActivity() {
@@ -171,15 +172,34 @@ public class MainActivity extends ActionBarActivity {
             }
             else {
                 name[count] = new EditText(MainActivity.this);
-                name[count].setHint("Enter name");
+                name[count].setHint("Enter name of player " + (count + 1));
+                Typeface type = Typeface.createFromAsset(getAssets(), "fonts/Raleway-Italic.ttf");
+                name[count].setTypeface(type);
+                name[count].setTextColor(Color.BLACK);
+                InputFilter[] myFilter = new InputFilter[2];
+                myFilter[0] = new InputFilter() {
+                    public CharSequence filter(CharSequence source, int start, int end,
+                                               Spanned dest, int dstart, int dend) {
+                        for (int i = start; i < end; i++) {
+                            if (!Character.isLetterOrDigit(source.charAt(i))) {
+                                return "";
+                            }
+                        }
+                        return null;
+                    }
+                };
+                myFilter[1] = new InputFilter.LengthFilter(50);
+                name[count].setFilters(myFilter);
+                name[count].setMaxEms(1);
                 LinearLayout ll = (LinearLayout) findViewById(R.id.edittext);
                 LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.FILL_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
                 layoutParams.topMargin = 20;
+                layoutParams.width = 640;
                 ll.addView(name[count], layoutParams);
                 name[count].requestFocus();
                 InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.showSoftInputFromInputMethod(name[count].getWindowToken(), 0);
+                imm.showSoftInput(name[count], 0);
                 count++;
             }
         }

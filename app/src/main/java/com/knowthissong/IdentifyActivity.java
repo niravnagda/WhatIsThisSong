@@ -10,11 +10,16 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.media.MediaPlayer;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Handler;
+import android.provider.Settings;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -95,6 +100,8 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
     private AlertDialog alert;
     private boolean finish = false;
     private AlertDialog.Builder scoresDialog;
+    public Track track;
+    public Bitmap artwork;
     TextView time;
 
     private static int currentInd = 0;
@@ -145,8 +152,6 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
 
         TextView difficulty = (TextView) findViewById(R.id.level);
         difficulty.setText(level);
-
-        Log.d(TAG + "difficulty level", level);
 
         // Set the timer to 30
         time = (TextView) findViewById(R.id.timer);
@@ -239,13 +244,40 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
                 showScores();
             }
         });
+
+        // Check if Internet present
+        if (!haveNetworkConnection()) {
+            // Internet Connection is not present
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage("Please connect to internet for app to work")
+                    .setCancelable(false)
+                    .setPositiveButton("Connect to WIFI", new DialogInterface.OnClickListener() {
+
+                        public void onClick(DialogInterface dialog, int id) {
+                            startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS));
+                        }
+                    })
+                    .setNegativeButton("Quit", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            if(player != null)
+                                player = null;
+                            if(T != null)
+                                T.cancel();
+                            finish();
+                        }
+                    });
+            AlertDialog alert = builder.create();
+            alert.setCanceledOnTouchOutside(false);
+            alert.show();
+            return;
+        }
     }
 
     public void displayRules() {
         //load some kind of a view
         LayoutInflater li = LayoutInflater.from(this);
         View view = li.inflate(R.layout.rules, (ViewGroup) findViewById(R.id.rules));
-        new AlertDialog.Builder(this)
+        AlertDialog rulesDialog = new AlertDialog.Builder(this)
                 .setTitle("Rules")
                 .setIcon(android.R.drawable.ic_menu_info_details)
                 .setView(view)
@@ -254,9 +286,11 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
                         if(player != null)
                             player.stop();
                         resetTimer();
-                        next(true);
+
                     }
-                }).show();
+                }).create();
+        rulesDialog.setCanceledOnTouchOutside(false);
+        rulesDialog.show();
     }
 
     public void updateScore(int score) {
@@ -270,8 +304,8 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
         currentSong++;
         playerName = names[currentSong % scores.size()];
         name.setText("Name: " + playerName);
-        next(true);
         resetTimer();
+
         if(currentSong != 0 && currentSong % 20 == 0) {
             showScores();
         }
@@ -282,11 +316,33 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
         count = 30;
         T.cancel();
         setTimer(30);
+        final TextView songName = (TextView) findViewById(R.id.songName);
+        final TextView artistName = (TextView) findViewById(R.id.artistName);
+        if(track != null) {
+            artistName.setText("By: " + track.artistName);
+            songName.setText("Song was: " + track.trackName);
+            if (artwork != null) {
+                albumArt.setImageBitmap(artwork);
+            } else
+                albumArt.setImageResource(R.drawable.blank_album_art);
+        }
         ImageButton wrong = (ImageButton) findViewById(R.id.Wrong);
         wrong.setVisibility(View.INVISIBLE);
         ImageButton right = (ImageButton) findViewById(R.id.Right);
         right.setVisibility(View.INVISIBLE);
         visible = false;
+        TextView wait = (TextView) findViewById(R.id.timer);
+        wait.setText("wait...");
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            public void run() {
+                artistName.setText("By:");
+                songName.setText("Song:");
+                TextView wait = (TextView) findViewById(R.id.timer);
+                wait.setText("30");
+                next(true);
+            }
+        }, 4000);
     }
 
     public void setTimer(int text) {
@@ -306,50 +362,62 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
         }
     }
 
+    //show scores of users
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void showScores() {
-        if(player != null)
+        if(player != null) {
             player.stop();
+        }
+        if(T != null) {
+            T.cancel();
+        }
         LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View layout = inflater.inflate(R.layout.scoreslayout, (ViewGroup) findViewById(R.id.scoresview));
         scoresDialog = new AlertDialog.Builder(IdentifyActivity.this);
         scoresDialog.setIcon(R.drawable.ic_launcher);
         scoresDialog.setTitle("Scores");
+        //get scores of each user and put it in a table row
         Iterator it = scores.entrySet().iterator();
         while(it.hasNext()) {
             Map.Entry pairs = (Map.Entry) it.next();
             String val = (String) pairs.getKey();
             TextView playerName = new TextView(this);
+            Typeface type = Typeface.createFromAsset(getAssets(), "fonts/Raleway-Italic.ttf");
+            playerName.setTypeface(type);
+            if(val.length() > 30) {
+                val = val.substring(0, 27);
+                val +="...";
+            }
             playerName.setText(val);
             playerName.setLayoutParams(new TableRow.LayoutParams(
                     TableRow.LayoutParams.MATCH_PARENT,
                     TableRow.LayoutParams.MATCH_PARENT,
                     1
-
             ));
             playerName.setGravity(Gravity.LEFT);
             playerName.setPadding(60,0,15,0);
             int score = (int) pairs.getValue();
             TextView scores = new TextView(this);
+            scores.setTypeface(type);
             scores.setText("" + score);
             scores.setLayoutParams(new TableRow.LayoutParams(
                     TableRow.LayoutParams.MATCH_PARENT,
                     TableRow.LayoutParams.MATCH_PARENT,
                     1
-
             ));
             scores.setGravity(Gravity.RIGHT);
             scores.setPadding(15,0,50,0);
             TableLayout scoreLayout = new TableLayout(getApplicationContext());
 
+            // add each text view to table view row
             TableRow scoreRow = new TableRow(getApplicationContext());
             GradientDrawable gd = new GradientDrawable();
-            gd.setStroke(1, Color.BLACK);
-
+            gd.setStroke(0, Color.BLACK);
             scoreRow.addView(playerName);
             scoreRow.addView(scores);
             scoreRow.setLayoutParams(new TableLayout.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.WRAP_CONTENT, 1));
             scoreRow.setPadding(5, 5, 5, 5);
+            //add score row to the table
             scoreLayout.addView(scoreRow);
             scoreLayout.setBackgroundDrawable(gd);
             scoreLayout.setColumnStretchable(5, true);
@@ -371,12 +439,12 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
                     startActivity(intent);
                 } else {
                     resetTimer();
-                    next(true);
                 }
             }
         });
         scoresDialog.setView(layout);
         alert = scoresDialog.create();
+        alert.setCanceledOnTouchOutside(false);
         alert.show();
     }
 
@@ -408,11 +476,18 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
         int id = item.getItemId();
         switch (id) {
             case R.id.backtohome:
+                if(player != null) {
+                    player.stop();
+                    player = null;
+                }
+                if(T != null)
+                    T.cancel();
                 finish();
                 Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                 startActivity(intent);
                 return true;
             case R.id.action_settings:
+                startActivity(new Intent(Settings.ACTION_APPLICATION_SETTINGS));
                 return true;
             case R.id.viewrules:
                 if(player != null)
@@ -486,9 +561,9 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
                     }
                     args.add(new BasicNameValuePair("query", queryString));
                     args.add(new BasicNameValuePair("types", "Track"));
-                    args.add(new BasicNameValuePair("count", "5"));
+                    args.add(new BasicNameValuePair("count", "10"));
                     currentInd++;
-                    String temp = "" + (5*currentInd);
+                    String temp = "" + (10*currentInd);
                     Log.i(TAG + " request", args.toString());
                     args.add(new BasicNameValuePair("start",temp));
 
@@ -518,6 +593,7 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
                                 if (trackKeys.size() >= 1)
                                     trackQueue.addAll(trackKeys);
                                 next(true);
+
                             } catch (Exception e) {
                                 Log.e(TAG, "Failed to handle JSONObject: ", e);
                             }
@@ -544,8 +620,8 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
             player = null;
         }
 
-        final Track track = trackQueue.poll();
-        if (trackQueue.size() < 3) {
+        track = trackQueue.poll();
+        if (trackQueue == null || trackQueue.size() < 3) {
             Log.i(TAG, "Track queue depleted, loading more tracks");
             LoadMoreTracks();
             return;
@@ -616,10 +692,6 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
             @Override
             protected void onPostExecute(Track track) {
                 if(track != null) {
-                    TextView songName = (TextView) findViewById(R.id.songName);
-                    TextView artistName = (TextView) findViewById(R.id.artistName);
-                    artistName.setText("Artist name: " + track.artistName);
-                    songName.setText("Song: " + track.trackName);
                     updatePlayPause(true);
                 }
             }
@@ -627,7 +699,7 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
         task.execute(track);
 
         // Fetch album art in the background and then update the UI on the main thread
-        AsyncTask<Track, Void, Bitmap> artworkTask = new AsyncTask<Track, Void, Bitmap>() {
+        final AsyncTask<Track, Void, Bitmap> artworkTask = new AsyncTask<Track, Void, Bitmap>() {
             @Override
             protected Bitmap doInBackground(Track... params) {
                 Track track = params[0];
@@ -655,11 +727,8 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
             }
 
             @Override
-            protected void onPostExecute(Bitmap artwork) {
-                if (artwork != null) {
-                    albumArt.setImageBitmap(artwork);
-                } else
-                    albumArt.setImageResource(R.drawable.blank_album_art);
+            protected void onPostExecute(Bitmap albunCover) {
+                artwork = albunCover;
             }
         };
         artworkTask.execute(track);
@@ -765,9 +834,31 @@ public class IdentifyActivity extends ActionBarActivity implements RdioListener 
         if ((keyCode == KeyEvent.KEYCODE_BACK))
         {
             finish = true;
+            if(player != null) {
+                player.stop();
+            }
+            player = null;
+            if(T != null)
+                T.cancel();
             showScores();
         }
         return super.onKeyDown(keyCode, event);
     }
 
+    private boolean haveNetworkConnection() {
+        boolean haveConnectedWifi = false;
+        boolean haveConnectedMobile = false;
+
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo[] netInfo = cm.getAllNetworkInfo();
+        for (NetworkInfo ni : netInfo) {
+            if (ni.getTypeName().equalsIgnoreCase("WIFI"))
+                if (ni.isConnected())
+                    haveConnectedWifi = true;
+            if (ni.getTypeName().equalsIgnoreCase("MOBILE"))
+                if (ni.isConnected())
+                    haveConnectedMobile = true;
+        }
+        return haveConnectedWifi || haveConnectedMobile;
+    }
 }
